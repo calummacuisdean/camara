@@ -37,10 +37,14 @@ Memory_Type=`dmidecode type 17 | grep DDR | awk -F: 'NR==1{print $2}'`
 Memory_MB=$MEMFREE
 CPU_MHz=$PROCSPEED
 CPU_Model_Name=$PROCNAME
-Disks=(`dmesg | grep "SCSI disk" | awk -F'[][]' '{print $4}'`)
+
+
+# Get the list of disks currently plugged in.
+Disks=$(lsblk -i -o KNAME,TYPE | grep disk | cut -d ' ' -f 1)
+
 #####################################################
 echo "Enumerating hard disks..."
-Disk_Count=`dmesg | grep "SCSI disk" | awk -F'[][]' '{print $4}' | grep -c sd`
+Disk_Count=$(echo $Disks | wc -l)
 echo
 if [ $Disk_Count != 0 ]; then
 echo -e "\e[32m$Disk_Count hard disk(s) detected: ${Disks[@]}\e[0m"
