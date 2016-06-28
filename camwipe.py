@@ -60,6 +60,10 @@ if __name__ == '__main__':
     system_info.chassis_type = call("dmidecode -s chassis-type")
     system_info.system_uuid = call("dmidecode -s system-uuid")
     system_info.system_version = call("dmidecode -s system-version")
+    system_info.eth0_mac_address = call("dmidecode -s system-manufacturer")
+
+    system_info.disks=call("dmesg | grep 'SCSI disk' | awk -F'[][]' '{print $4}'")
+
 
 
 
