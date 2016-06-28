@@ -51,6 +51,11 @@ read -p "Press any key to exit." -n1 -s
 exit
 fi
 echo
+
+# Directory where we will place all the reports for this run.
+LOG_BASEDIR="/root/`date +'%Y%m%d-%H:%M:%S'`"
+mkdir -p ${LOG_BASEDIR}
+
 #
 # Begin loop
 #
@@ -64,7 +69,11 @@ done
 echo "Waiting for disks to complete"
 wait
 
-    firefox $MYFILENAMEA &
+echo "All disks completed, showing reports"
+for i in $LOG_BASEDIR/*.html; do
+	ARG+=" -new-tab -url $i"
+done
+firefox $ARG
 
 
 ################################################
@@ -183,7 +192,7 @@ function do_one_disk() {
     WORDCOUNTF=`grep "Wipe of device" "${MYLOGFILENAME}" | grep -c "failed"`
     WORDCOUNTS=`grep "Blanked" "${MYLOGFILENAME}" | grep -c "device"`
     
-    MYFILENAMEA="/root/${BARCODE}_${Disk_Serial}_`date +'%Y%m%d-%H%M%S_%N'`.html"
+    MYFILENAMEA="/root/${LOG_BASEDIR}/${BARCODE}_${Disk_Serial}_`date +'%Y%m%d-%H%M%S_%N'`.html"
     touch $MYFILENAMEA
     cat >>$MYFILENAMEA <<END_OF_LOGFILENAMEA1
     <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"> 
