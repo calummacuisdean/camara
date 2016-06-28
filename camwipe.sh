@@ -69,10 +69,13 @@ for disk in ${Disks[@]}
     Erase_Estimate=`hdparm -I /dev/$disk | grep -i "for security erase" | awk '{print $1}'`
     Security_Erase=`hdparm -I /dev/$disk | grep -c "Security Mode"`
     Smart_Check=`hdparm -I /dev/$disk | grep -i "SMART feature set" | grep -c "*"`
-    MYFILENAMEA="`date +'%Y%m%d-%H%M%S_%N'`"
-    MYLOGFILENAME="/root/camwipe.log"
+
+    # Sanitize the serial number so we can use it in paths and file names.
+    Disk_Serial=$(echo "$Disk_Serial" | tr -cd '[:alnum:]' | tr '[:lower:]' '[:upper:]')
+
+    MYLOGFILENAME="/root/camwipe-${Disk_Serial}.log"
     touch $MYLOGFILENAME
-    ID_Date_No=$MYFILENAMEA 
+    ID_Date_No="`date +'%Y%m%d-%H%M%S_%N'`"
     #
     # End Variables
     #
@@ -183,10 +186,7 @@ for disk in ${Disks[@]}
     WORDCOUNTF=`grep "Wipe of device" "${MYLOGFILENAME}" | grep -c "failed"`
     WORDCOUNTS=`grep "Blanked" "${MYLOGFILENAME}" | grep -c "device"`
     
-    MYFILENAMEA="${BARCODE}_$MYFILENAMEA"
-    MYFILENAMEB=${MYFILENAMEA}.html
-    MYFILENAMEA="/root/${MYFILENAMEB}"
-    #<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+    MYFILENAMEA="/root/${BARCODE}_${Disk_Serial}_`date +'%Y%m%d-%H%M%S_%N'`.html"
     touch $MYFILENAMEA
     cat >>$MYFILENAMEA <<END_OF_LOGFILENAMEA1
     <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"> 
@@ -328,7 +328,7 @@ for disk in ${Disks[@]}
     else sed -i 's/<TD style="vertical-align:top" bgcolor="grey">/<TD style="vertical-align:top" bgcolor="yellow">/g' $MYFILENAMEA
     fi
     
-    tftp -l $MYFILENAMEA -r /logwiping/$MYFILENAMEB -p 192.168.56.10
+    tftp -l $MYFILENAMEA -r /logwiping/$(basename "$MYFILENAMEA") -p 192.168.56.10
     
     sed -i 's/Camara System Wiping Report/Camara System Wiping Report - Press CTRL Q to exit/g' $MYFILENAMEA
     
