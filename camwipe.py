@@ -47,19 +47,19 @@ if __name__ == '__main__':
     print system_info.memsys
 
     system_info.procspeed = call("cat /proc/cpuinfo | grep -m 1 -i 'cpu mhz' | awk '{print $4, $2}'")
-    system_info.procname = call("cat /proc/cpuinfo | grep -m 1 -i 'model name' | cut -d : -f 2"
+    system_info.procname = call("cat /proc/cpuinfo | grep -m 1 -i 'model name' | cut -d : -f 2")
 
     system_info.system_manufacturer = call("dmidecode -s system-manufacturer")
     system_info.system_serial_number = call("dmidecode -s system-serial-number")
-    system_info.system_product_name = call("dmidecode -s system-product_name")
-    system_info.chassis_asset_tag = call("dmidecode -s chassis_asset_tag")
-    system_info.baseboard_asset_tag = call("dmidecode -s baseboard_asset_tag")
-    system_info.baseboard_serial_number = call("dmidecode -s baseboard_serial_number")
-    system_info.chassis_serial_number = call("dmidecode -s chassis_serial_number")
-    system_info.chassis_asset_tag = call("dmidecode -s chassis_asset_tag")
-    system_info.chassis_type = call("dmidecode -s chassis_type")
-    system_info.system_uuid = call("dmidecode -s system_uuid")
-    system_info.system_version = call("dmidecode -s system_version")
+    system_info.system_product_name = call("dmidecode -s system-product-name")
+    system_info.chassis_asset_tag = call("dmidecode -s chassis-asset-tag")
+    system_info.baseboard_asset_tag = call("dmidecode -s baseboard-asset-tag")
+    system_info.baseboard_serial_number = call("dmidecode -s baseboard-serial-number")
+    system_info.chassis_serial_number = call("dmidecode -s chassis-serial-number")
+    system_info.chassis_asset_tag = call("dmidecode -s chassis-asset-tag")
+    system_info.chassis_type = call("dmidecode -s chassis-type")
+    system_info.system_uuid = call("dmidecode -s system-uuid")
+    system_info.system_version = call("dmidecode -s system-version")
 
 
 
