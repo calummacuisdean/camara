@@ -54,8 +54,22 @@ echo
 #
 # Begin loop
 #
-for disk in ${Disks[@]}
-    do
+echo
+echo "Launching the erase of individual disks"
+for disk in ${Disks[@]}; do
+	echo "   $disk"
+	do_one_disk &
+done
+
+echo "Waiting for disks to complete"
+wait
+
+    firefox $MYFILENAMEA &
+
+
+################################################
+
+function do_one_disk() {
     #
     # Begin variables
     #
@@ -82,27 +96,26 @@ for disk in ${Disks[@]}
     # Check if disk is locked and unlock if necessary
     #
     if [ $Security_Erase != 0 ] && [ $Disk_Lock == 0 ]; then
-        echo "Unlocking device /dev/$disk..."
+        echo "/dev/$disk  Unlocking device..."
         hdparm --security-disable password /dev/$disk >/dev/null
         echo
     fi
     # Print basic disk info to screen and log
     #
-    echo "Device /dev/$disk is a $Disk_Model" && echo "Disk Model: $Disk_Model" > $MYLOGFILENAME
+    echo "/dev/$disk is a $Disk_Model" && echo "Disk Model: $Disk_Model" > $MYLOGFILENAME
     echo >> $MYLOGFILENAME
-    echo "Serial Number is $Disk_Serial" && echo "Serial Number: $Disk_Serial" >> $MYLOGFILENAME
+    echo "/dev/$disk Serial Number is $Disk_Serial" && echo "Serial Number: $Disk_Serial" >> $MYLOGFILENAME
     echo >> $MYLOGFILENAME
-    echo "Capacity is $Disk_Size" && echo "Capacity: $Disk_Size" >> $MYLOGFILENAME
+    echo "/dev/$disk Capacity is $Disk_Size" && echo "Capacity: $Disk_Size" >> $MYLOGFILENAME
     echo && echo >> $MYLOGFILENAME
     #
     # Check if SMART is supported and print SMART status to screen and log
     #
     if [ $Smart_Check != 0 ]; then
-        echo "SMART status for device /dev/$disk: $Disk_Health" && echo "SMART status: $Disk_Health" >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
+        echo "/dev/$disk  SMART status for device: $Disk_Health" && echo "SMART status: $Disk_Health" >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
     else
-        echo -e "\e[33mDevice /dev/$disk does not support SMART or it is disabled.\e[0m" && echo "Disk Health Check: SMART unsupported" >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
+        echo -e "\e[33m/dev/$disk does not support SMART or it is disabled.\e[0m" && echo "Disk Health Check: SMART unsupported" >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
     fi
-    echo
     #
     # If drive is healthy or if SMART is unavailable, check for security erase support and wipe using hdparm or nwipe
     #
@@ -111,54 +124,40 @@ for disk in ${Disks[@]}
             #
             # Run hdparm
             #
-            echo -e "\e[32mThis device supports security erase.\e[0m"
-            echo
-            #
-            # Check if disk is frozen and sleep machine if necessary
-            #
-            if [ $Disk_Frozen == 0 ]; then
-                echo "Device /dev/$disk is frozen. Sleeping machine to unfreeze..."
+            echo -e "\e[32m/dev/$disk This device supports security erase.\e[0m"
+
+            # Check if disk is frozen and sleep machine if necessary.
+	    # Only do this if we are erasing 1 disk, to avoid interfering with
+	    # other erases on the same machine.
+            if [ $Disk_Count -gt 1 ] && [ $Disk_Frozen == 0 ]; then
+                echo "/dev/$disk is frozen. Sleeping machine to unfreeze..."
                 echo
                 sleep 3s
                 rtcwake -u -s 10 -m mem >/dev/null
                 sleep 5s
             fi
-            echo "Setting password..."
-            echo
             hdparm --security-set-pass password /dev/$disk >/dev/null
             if [ $? -eq 0 ]; then
-               echo -e "\e[32mPassword set\e[0m"
+               echo -e "\e[32m/dev/$disk Password set\e[0m"
                else 
-               echo -e "\e[31mFailed to set password!\e[0m"
+               echo -e "\e[31m/dev/$disk Failed to set password!\e[0m"
                echo
-               read -p "Press any key to continue." -n1 -s
             fi
-            echo
             MYTIMEVAR=`date +'%k:%M:%S'`
             if [ $Enhanced_Erase == 0 ]; then
-                echo "Enhanced secure erase of $Disk_Model (/dev/$disk) started at $MYTIMEVAR." && echo "Wiping device using enhanced secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
-                if [[ $Erase_Estimate ]]; then
-                    echo "Estimated time for erase is $Erase_Estimate."
-                else
-                    echo "Estimated time for erase is unknown. It may take one or more hours..."
-                fi
+                echo "/dev/$disk enhanced secure erase of $Disk_Model started at $MYTIMEVAR" && echo "Wiping device using enhanced secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
                 hdparm --security-erase-enhanced password /dev/$disk >/dev/null
             else
-                echo "Secure erase of $Disk_Model (/dev/$disk) started at $MYTIMEVAR." && echo -e "This may take one or more hours..."  && echo "Wiping device using secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
-                if [[ $Erase_Estimate ]]; then
-                    echo "Estimated time for erase is $Erase_Estimate."
-                else
-                    echo "Estimated time for erase is unknown. It may take one or more hours..."
-                fi
+                echo "/dev/$disk secure erase of $Disk_Model started at $MYTIMEVAR." && echo -e "This may take one or more hours..."  && echo "Wiping device using secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
                 hdparm --security-erase password /dev/$disk >/dev/null
             fi
             if [ $? -eq 0 ]; then
                 echo
-                echo -e "\e[32mDisk erased successfully.\e[0m" && echo "Blanked device successfully." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
+                echo -e "\e[32m/dev/$disk erased successfully.\e[0m" && echo "Blanked device successfully." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
                 echo
                 else
                 echo
-                echo -e "\e[31mErase failed. Replace hard disk.\e[0m" && echo "Wipe of device failed." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
+                echo -e "\e[31m/dev/$disk erase failed. Replace hard disk.\e[0m" && echo "Wipe of device failed." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
                 echo
             fi
         else
@@ -166,10 +165,10 @@ for disk in ${Disks[@]}
             #
             # Run nwipe
             #
-            echo -e "\e[33mDevice /dev/$disk does not support security erase. Falling back to nwipe...\e[0m" && echo "Security erase not supported by device. Falling back to nwipe..." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
+            echo -e "\e[33m/dev/$disk does not support security erase. Falling back to nwipe...\e[0m" && echo "Security erase not supported by device. Falling back to nwipe..." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
             echo
             sleep 3s
-            nwipe --autonuke --method=dodshort --nowait --logfile=$MYLOGFILENAME /dev/$disk
+            nwipe --autonuke --method=dodshort --nowait --logfile=$MYLOGFILENAME /dev/$disk >/dev/null 2>/dev/null
             MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
             echo "Finished on: $MYTIMEVAR" >> $MYLOGFILENAME
             echo "$NWIPEVERSION" >> $MYLOGFILENAME
@@ -179,9 +178,7 @@ for disk in ${Disks[@]}
     # If SMART is supported and drive is unhealthy, print message to replace disk 
     #
     if [ $Smart_Check != 0 ] && [ $Disk_Health != PASSED ]; then
-        echo -e "\e[31mSMART check of /dev/$disk failed. Replace hard disk.\e[0m" && echo "SMART check failed." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME && echo "Wipe of device failed." >> $MYLOGFILENAME
-        echo
-        read -p "Press any key to continue." -n1 -s
+        echo -e "\e[31m/dev/$disk SMART check failed. Replace hard disk.\e[0m" && echo "SMART check failed." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME && echo "Wipe of device failed." >> $MYLOGFILENAME
     fi
     WORDCOUNTF=`grep "Wipe of device" "${MYLOGFILENAME}" | grep -c "failed"`
     WORDCOUNTS=`grep "Blanked" "${MYLOGFILENAME}" | grep -c "device"`
@@ -331,7 +328,4 @@ for disk in ${Disks[@]}
     tftp -l $MYFILENAMEA -r /logwiping/$(basename "$MYFILENAMEA") -p 192.168.56.10
     
     sed -i 's/Camara System Wiping Report/Camara System Wiping Report - Press CTRL Q to exit/g' $MYFILENAMEA
-    
-    firefox $MYFILENAMEA &
-    echo
-done
+}
