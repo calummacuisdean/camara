@@ -10,10 +10,22 @@ import subprocess
 class SystemInfo:
     """Placeholder for system settings and information."""
 
+    def __str__(self):
+        s = '===== System info\n'
+        for name in dir(self):
+            if name.startswith('_'):
+                    continue
+            s += '%s: %s\n' % (name, getattr(self, name))
+
+        return s
+
 
 def call(cmd):
-    return subprocess.check_output(cmd, shell=True)
-
+    try:
+        return subprocess.check_output(cmd, shell=True)
+    except subprocess.CalledProcessError as e:
+        print 'Error running %r: %s' % (cmd, e)
+        return ''
 
 
 if __name__ == '__main__':
@@ -30,9 +42,7 @@ if __name__ == '__main__':
     system_info = SystemInfo()
 
     system_info.nwipe_version = call('nwipe --version')
-    print system_info.nwipe_version
     system_info.free_memory = int(call("free | grep -w 'Mem' | awk '{print $2}'"))/1024
-    print system_info.free_memory
     system_info.memsys = call("lshw -C memory -short | grep 'System' | awk '{print $3}'")
     print system_info.memsys
 
@@ -58,4 +68,5 @@ if __name__ == '__main__':
 
 
 
+    print system_info
 
