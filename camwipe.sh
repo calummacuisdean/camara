@@ -301,7 +301,7 @@ function do_one_disk() {
     
     	<TD style="vertical-align:top" bgcolor="grey">
     <PRE><CODE style="vertical-align:top">
-    END_OF_LOGFILENAMEA1
+END_OF_LOGFILENAMEA1
     
     cat ${MYLOGFILENAME} >>$MYFILENAMEA
     
@@ -317,7 +317,7 @@ function do_one_disk() {
     <a href="http://camara.org/" target="_blank">camara.org</a> 
     </body>
     </html>
-    END_OF_LOGFILENAMEA2
+END_OF_LOGFILENAMEA2
     
     if [ "$WORDCOUNTS" -gt "0" ]
     then sed -i 's/<TD style="vertical-align:top" bgcolor="grey">/<TD style="vertical-align:top" bgcolor="green">/g' $MYFILENAMEA
@@ -338,3 +338,4 @@ function do_one_disk() {
     
     sed -i 's/Camara System Wiping Report/Camara System Wiping Report - Press CTRL Q to exit/g' $MYFILENAMEA
 }
+
