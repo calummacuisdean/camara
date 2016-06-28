@@ -169,7 +169,7 @@ function do_one_disk() {
     WORDCOUNTF=`grep "Wipe of device" "${MYLOGFILENAME}" | grep -c "failed"`
     WORDCOUNTS=`grep "Blanked" "${MYLOGFILENAME}" | grep -c "device"`
     
-    MYFILENAMEA="/root/${LOG_BASEDIR}/${BARCODE}_${Disk_Serial}_`date +'%Y%m%d-%H%M%S_%N'`.html"
+    MYFILENAMEA="${LOG_BASEDIR}/${BARCODE}_${Disk_Serial}_`date +'%Y%m%d-%H%M%S_%N'`.html"
     touch $MYFILENAMEA
     cat >>$MYFILENAMEA <<END_OF_LOGFILENAMEA1
     <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"> 
