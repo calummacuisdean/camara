@@ -52,32 +52,9 @@ exit
 fi
 echo
 
-# Directory where we will place all the reports for this run.
-LOG_BASEDIR="/root/`date +'%Y%m%d-%H:%M:%S'`"
-mkdir -p ${LOG_BASEDIR}
-
-#
-# Begin loop
-#
-echo
-echo "Launching the erase of individual disks"
-for disk in ${Disks[@]}; do
-	echo "   $disk"
-	do_one_disk &
-done
-
-echo "Waiting for disks to complete"
-wait
-
-echo "All disks completed, showing reports"
-for i in $LOG_BASEDIR/*.html; do
-	ARG+=" -new-tab -url $i"
-done
-firefox $ARG
-
-
 ################################################
-
+# This function erases a single disk.
+# It will be called from a loop below.
 function do_one_disk() {
     #
     # Begin variables
@@ -338,4 +315,29 @@ END_OF_LOGFILENAMEA2
     
     sed -i 's/Camara System Wiping Report/Camara System Wiping Report - Press CTRL Q to exit/g' $MYFILENAMEA
 }
+
+
+# Directory where we will place all the reports for this run.
+LOG_BASEDIR="/root/`date +'%Y%m%d-%H:%M:%S'`"
+mkdir -p ${LOG_BASEDIR}
+
+#
+# Begin loop
+#
+echo
+echo "Launching the erase of individual disks"
+for disk in ${Disks[@]}; do
+	echo "   $disk"
+	do_one_disk &
+done
+
+echo "Waiting for disks to complete"
+wait
+
+echo "All disks completed, showing reports"
+for i in $LOG_BASEDIR/*.html; do
+	ARG+=" -new-tab -url $i"
+done
+firefox $ARG
+
 
