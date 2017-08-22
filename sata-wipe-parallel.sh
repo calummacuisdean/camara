@@ -16,13 +16,7 @@ fi
 bold=$(tput bold)
 normal=$(tput sgr0)
 echo
-echo "Loading ${bold}$BRAND${normal}..."
-
-# Checking for required software packages
-echo
-echo "Checking/installing required packages..."
-#apt -qq update
-#apt -qq install -y smartmontools hdparm nwipe parallel whiptail
+echo "Loading ${bold}$brand${normal}..."
 
 # Get some useful system variables
 current_time=`date +'%a %d %b %Y %k:%M:%S'`
@@ -62,7 +56,7 @@ else
 The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 1>&2 2>&3)
 
   exitstatus=$?
-  if [ $exitstatus != 0 ] || [ -z $drives_selected ]; then
+  if [[ ( $exitstatus != 0 ) || ( -z $drives_selected ) ]]; then
     echo
     echo "Shutting down..."
     #shutdown now
@@ -107,11 +101,11 @@ ${drives_selected[@]}" 20 78) then
     fi
 
     # Check SMART status
-    #if [ $smart_check != 0 ]; then
+    # if [ $smart_check != 0 ]; then
     #  echo "SMART status for device /dev/$drive: $Disk_Health"
-    #else
+    # else
     #  echo -e "\e[33mDevice /dev/$drive does not support SMART or it is disabled.\e[0m"
-    #fi
+    # fi
 
     # If drive is healthy or if SMART is unavailable, check for security erase support and wipe using hdparm or nwipe
     if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
