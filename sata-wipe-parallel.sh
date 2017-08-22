@@ -31,13 +31,19 @@ current_time=`date +'%a %d %b %Y %k:%M:%S'`
 export ver_nwipe=`nwipe --version`
 export ver_hdparm=`hdparm -V`
 
-drives=(`dmesg | grep "SCSI drive" | awk -F'[][]' '{print $4}'`)
-drives_count=`dmesg | grep "SCSI drive" | awk -F'[][]' '{print $4}' | grep -c sd`
+drives=(`dmesg | grep "SCSI disk" | awk -F'[][]' '{print $4}'`)
+drives_count=`dmesg | grep "SCSI disk" | awk -F'[][]' '{print $4}' | grep -c sd`
+drives_available=()
+for drive in $drives; do
+  drives_available+=("/dev/$drive")
+  drives_available+=("Description")
+  drives_available+=("on")
+done
 
-drives=("sda" "Maxtor 80gb" "on" "sdb" "IBM 120Gb" "on" "sdc" "WD 300Gb" "on")
-drive_count=3
+#drives=("sda" "Maxtor 80gb" "on" "sdb" "IBM 120Gb" "on" "sdc" "WD 300Gb" "on")
+#drives_count=3
 
-if [ $drive_count == 0 ]; then
+if [ $drives_count == 0 ]; then
   # No drives detected
   whiptail --title "$brand" --msgbox "No SATA drives detected. Select Ok to shut down." 8 78
   echo
@@ -46,13 +52,12 @@ if [ $drive_count == 0 ]; then
   exit
 else
   # Allow selection of drives to wipe
-  selection=$(whiptail --title "$brand" --checklist --separate-output "\n$drive_count drives are connected. \
-The selected drives will be wiped in parallel." \
-22 78 12 "${drives[@]}" 3>&1 1>&2 2>&3)
+  drives_selected=$(whiptail --title "$brand" --checklist --separate-output "\n$drives_count drives are connected.\
+The selected drives will be wiped in parallel." 22 78 12 "${drives_available[@]}" 3>&1 1>&2 2>&3)
 
   # Wipe confirmation
   if (whiptail --title "$brand" --yesno "Are you sure you want to securely wipe the following drives:\n\n\
-${selection[@]}" 20 78) then
+${drives_selected[@]}" 20 78) then
     echo
     echo "Confirmation given to begin wiping selected drives..."
   else
@@ -62,14 +67,12 @@ ${selection[@]}" 20 78) then
     exit
   fi
 
-  echo "test"
-
-  parallel echo ::: "hdparm --secure-erase $selection"
+  parallel --will-cite echo --test ::: $drives_selected
 
   exit
 
   # Iterate through all selected drives
-  for drive in $selection; do 
+  for drive in $drives_selected; do 
     # Get interesting info about selected drive
     disk_frozen=`hdparm -I /dev/$drive | grep frozen | grep -c not`
     disk_health=`smartctl -H /dev/$drive | grep -i "test result" | tail -c15 |awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
