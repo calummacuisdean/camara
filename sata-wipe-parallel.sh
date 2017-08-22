@@ -31,14 +31,17 @@ current_time=`date +'%a %d %b %Y %k:%M:%S'`
 export ver_nwipe=`nwipe --version`
 export ver_hdparm=`hdparm -V`
 
-drives=(`dmesg | grep "SCSI disk" | awk -F'[][]' '{print $4}'`)
-drives_count=`dmesg | grep "SCSI disk" | awk -F'[][]' '{print $4}' | grep -c sd`
+drives=`lsblk -nio KNAME,TYPE,SIZE,MODEL | grep disk | awk '{print $1}'`
+drives_count=(`lsblk -nio KNAME,TYPE,SIZE,MODEL | grep disk | grep -c sd`)
 drives_available=()
 for drive in $drives; do
-  drives_available+=("/dev/$drive")
-  drives_available+=("Description")
-  drives_available+=("on")
+  drives_available+="/dev/$drive \
+`lsblk -nio MODEL /dev/$drive | awk '{print $1}'`_`lsblk -nio SIZE,TYPE /dev/$drive | grep disk | awk '{print $1}'`\
+ on "
 done
+
+# echo $drives_available
+# exit
 
 #drives=("sda" "Maxtor 80gb" "on" "sdb" "IBM 120Gb" "on" "sdc" "WD 300Gb" "on")
 #drives_count=3
@@ -51,9 +54,20 @@ if [ $drives_count == 0 ]; then
   #shutdown now
   exit
 else
+#   echo whiptail --title \"$brand\" --checklist --separate-output \"\n$drives_count drives are connected. \
+# The selected drives will be wiped in parallel.\" 22 78 12 $drives_available 3>&1 1>&2 2>&3
+
   # Allow selection of drives to wipe
-  drives_selected=$(whiptail --title "$brand" --checklist --separate-output "\n$drives_count drives are connected.\
-The selected drives will be wiped in parallel." 22 78 12 "${drives_available[@]}" 3>&1 1>&2 2>&3)
+  drives_selected=$(whiptail --title "$brand" --checklist --separate-output "\n$drives_count drives are connected. \
+The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 1>&2 2>&3)
+
+  exitstatus=$?
+  if [ $exitstatus != 0 ] || [ -z $drives_selected ]; then
+    echo
+    echo "Shutting down..."
+    #shutdown now
+    exit
+  fi
 
   # Wipe confirmation
   if (whiptail --title "$brand" --yesno "Are you sure you want to securely wipe the following drives:\n\n\
@@ -61,7 +75,7 @@ ${drives_selected[@]}" 20 78) then
     echo
     echo "Confirmation given to begin wiping selected drives..."
   else
-    echo 
+    echo
     echo "Shutting down..."
     #shutdown now
     exit
@@ -72,7 +86,7 @@ ${drives_selected[@]}" 20 78) then
   exit
 
   # Iterate through all selected drives
-  for drive in $drives_selected; do 
+  for drive in $drives_selected; do
     # Get interesting info about selected drive
     disk_frozen=`hdparm -I /dev/$drive | grep frozen | grep -c not`
     disk_health=`smartctl -H /dev/$drive | grep -i "test result" | tail -c15 |awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
@@ -98,17 +112,17 @@ ${drives_selected[@]}" 20 78) then
     #else
     #  echo -e "\e[33mDevice /dev/$drive does not support SMART or it is disabled.\e[0m"
     #fi
-    
+
     # If drive is healthy or if SMART is unavailable, check for security erase support and wipe using hdparm or nwipe
     if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
       if [ $security_erase != 0 ]; then
         # Run hdparm erase
         echo
         echo -e "\e[32mThis device supports security erase.\e[0m"
-        
+
         # Check if drive is frozen and sleep machine if necessary
         if [ $disk_frozen == 0 ]; then
-          echo 
+          echo
           echo "Device /dev/$drive is frozen. Sleeping machine to unfreeze..."
           #sleep 3s
           #rtcwake -u -s 10 -m mem >/dev/null
@@ -119,7 +133,7 @@ ${drives_selected[@]}" 20 78) then
         hdparm --security-set-pass password /dev/$drive >/dev/null
         if [ $? -eq 0 ]; then
           echo -e "\e[32mPassword set\e[0m"
-        else 
+        else
           echo -e "\e[31mFailed to set password!\e[0m"
           echo
           read -p "Press any key to continue." -n1 -s
@@ -168,7 +182,7 @@ ${drives_selected[@]}" 20 78) then
 
     wait
     #
-    # If SMART is supported and drive is unhealthy, print message to replace drive 
+    # If SMART is supported and drive is unhealthy, print message to replace drive
     #
     if [ $smart_check != 0 ] && [ $disk_health != PASSED ]; then
       echo -e "\e[31mSMART check of /dev/$drive failed. Replace hard drive.\e[0m"
